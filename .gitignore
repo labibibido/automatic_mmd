@@ -1,0 +1,48 @@
+# Large production assets
+*.blend
+*.blend1
+*.fbx
+*.pmx
+*.pmd
+*.vrm
+*.obj
+*.vmd
+*.vpd
+
+# Audio and rendered media
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.mp4
+*.mov
+*.avi
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.exr
+
+# Generated output folders
+MMD_Project/output/
+MMD_Project/blend_files/
+MMD_Project/stage/tex/
+MMD_Project/textures/
+MMD_Project/model/character/
+MMD_Project/model/backup/
+MMD_Project/music/
+MMD_Project/motion/
+MMD_Project/camera/
+MMD_Project/stage/
+
+# Keep source-controlled workflow files
+!MMD_Project/scripts/
+!MMD_Project/scripts/*.py
+!MMD_Project/docs/
+!MMD_Project/docs/*.md
+
+# Python and app caches
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
