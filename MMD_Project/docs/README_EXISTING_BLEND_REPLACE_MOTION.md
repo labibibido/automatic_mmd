@@ -50,48 +50,15 @@ MMD_Project/scripts/replace_motion_in_existing_blend.py
 MMD_Project/blend_files/existing_blend_new_motion.blend
 ```
 
-默认不会直接渲染。确认动作和镜头没问题后，把脚本里的：
+主脚本只负责换动作、镜头、音乐、相机高度、物理准备和保存工程；它不再创建渲染帧文件夹，也不直接渲染。
 
-```python
-RENDER_ANIMATION = False
-```
-
-改成：
-
-```python
-RENDER_ANIMATION = True
-```
-
-视频输出到：
+确认动作和镜头没问题后，打开保存后的工程：
 
 ```text
-MMD_Project/output/video/existing_blend_new_motion.mp4
+MMD_Project/blend_files/existing_blend_new_motion.blend
 ```
 
-默认推荐不要直接输出 mp4，而是先输出 PNG 序列。脚本会自动设置：
-
-```python
-OUTPUT_MODE = "PNG_SEQUENCE"
-RENDER_ANIMATION = False
-```
-
-运行脚本后，它只会配置渲染，不会立刻开渲。确认工程正常后，在 Blender 菜单里手动点：
-
-```text
-Render -> Render Animation
-```
-
-每次运行会创建一个新的帧输出文件夹：
-
-```text
-MMD_Project/output/frames/render_YYYYMMDD_HHMMSS/frame_0001.png
-MMD_Project/output/frames/render_YYYYMMDD_HHMMSS/frame_0002.png
-MMD_Project/output/frames/render_YYYYMMDD_HHMMSS/frame_0003.png
-```
-
-这种方式比直接 mp4 稳得多：中断后已经渲好的帧还在，不需要全部重来。
-
-如果 Blender 报错说 PNG 格式不可用，或者工程输出格式被锁在 `FFMPEG`，使用安全逐帧渲染脚本：
+然后使用安全逐帧渲染脚本：
 
 ```text
 MMD_Project/scripts/render_png_frames_safe.py
@@ -99,20 +66,13 @@ MMD_Project/scripts/render_png_frames_safe.py
 
 用法：
 
-1. 先运行 `replace_motion_in_existing_blend.py`，让它保存好新工程。
-2. 打开保存后的工程：
-
-```text
-MMD_Project/blend_files/existing_blend_new_motion.blend
-```
-
-3. 在 Text Editor 里打开：
+1. 在 Text Editor 里打开：
 
 ```text
 MMD_Project/scripts/render_png_frames_safe.py
 ```
 
-4. 点击 `Run Script`。
+2. 点击 `Run Script`。
 
 它会逐帧渲染并保存：
 
@@ -121,14 +81,6 @@ MMD_Project/output/frames/manual_frames_YYYYMMDD_HHMMSS/frame_0001.png
 ```
 
 已经存在的帧会自动跳过，所以中断后可以继续跑。
-
-如果你一定要直接渲 mp4，可以改成：
-
-```python
-OUTPUT_MODE = "MP4"
-```
-
-但不建议在当前电脑上直接把 `RENDER_ANIMATION` 改成 `True`。
 
 ## PNG 序列合成视频
 
@@ -139,7 +91,7 @@ OUTPUT_MODE = "MP4"
 3. 进入本次输出目录，例如：
 
 ```text
-MMD_Project/output/frames/render_YYYYMMDD_HHMMSS/
+MMD_Project/output/frames/manual_frames_YYYYMMDD_HHMMSS/
 ```
 
 4. 选中所有 `frame_####.png`。

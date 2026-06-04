@@ -16,7 +16,6 @@ Recommended workflow:
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
@@ -44,10 +43,6 @@ NORMALIZE_IMPORTED_MOTION_TO_FRAME_START = True
 ALLOW_UNSAFE_VMD_IMPORT = False
 REPLACE_MUSIC = True
 ADD_EXTRA_ANIME_FILL_LIGHT = True
-RENDER_ANIMATION = False
-OUTPUT_MODE = "PNG_SEQUENCE"
-PNG_COLOR_MODE = "RGBA"
-PNG_COMPRESSION = 15
 RENDER_RESOLUTION_PERCENTAGE = 100
 DISABLE_RIGID_BODY_PHYSICS_FOR_TEST = False
 RESET_RIGID_BODY_CACHE = True
@@ -66,19 +61,11 @@ CAMERA_HEAD_TARGET_OFFSET = (0.0, 0.0, 0.0)
 CAMERA_TRACK_AXIS = "TRACK_NEGATIVE_Z"
 CAMERA_UP_AXIS = "UP_Y"
 
-OUTPUT_FILENAME = "existing_blend_new_motion.mp4"
 SAVED_BLEND_FILENAME = "existing_blend_new_motion.blend"
-FRAME_OUTPUT_RUN_NAME = ""
 
 
 def motion_start_frame() -> int:
     return FRAME_START + int(round(PRE_ROLL_SECONDS * FPS))
-
-
-def frame_output_run_name() -> str:
-    if FRAME_OUTPUT_RUN_NAME:
-        return FRAME_OUTPUT_RUN_NAME
-    return "render_" + datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 class PipelineError(RuntimeError):
@@ -154,8 +141,6 @@ MOTION_DIR = PROJECT_ROOT / "motion"
 CAMERA_DIR = PROJECT_ROOT / "camera"
 MUSIC_DIR = PROJECT_ROOT / "music"
 BLEND_DIR = PROJECT_ROOT / "blend_files"
-VIDEO_DIR = PROJECT_ROOT / "output" / "video"
-FRAMES_DIR = PROJECT_ROOT / "output" / "frames"
 TEXTURE_SEARCH_DIRS = [
     PROJECT_ROOT / "textures",
     PROJECT_ROOT / "stage",
@@ -815,37 +800,6 @@ def set_eevee_engine(scene: bpy.types.Scene) -> None:
     log(f"Render engine set to: {scene.render.engine}")
 
 
-def supported_image_formats(scene: bpy.types.Scene) -> set[str]:
-    items = scene.render.image_settings.bl_rna.properties["file_format"].enum_items
-    return {item.identifier for item in items}
-
-
-def set_output_image_format(scene: bpy.types.Scene, file_format: str, strict: bool = True) -> bool:
-    supported = supported_image_formats(scene)
-    if file_format not in supported:
-        message = (
-            f"Render image format '{file_format}' is not available in this Blender context. "
-            f"Supported formats: {sorted(supported)}. "
-        )
-        if strict:
-            raise PipelineError(message)
-        log(message)
-        return False
-    try:
-        scene.render.image_settings.file_format = file_format
-        return True
-    except TypeError as exc:
-        message = (
-            f"Could not set render image format to '{file_format}': {exc}. "
-            "This scene appears to be locked to FFMPEG output. "
-            "The pipeline will still save the scene; use scripts/render_png_frames_safe.py to render PNG frames."
-        )
-        if strict:
-            raise PipelineError(message) from exc
-        log(message)
-        return False
-
-
 def setup_render_settings() -> None:
     scene = bpy.context.scene
     scene.render.fps = FPS
@@ -859,32 +813,7 @@ def setup_render_settings() -> None:
     scene.view_settings.look = "Medium High Contrast"
     scene.view_settings.exposure = 0
     scene.view_settings.gamma = 1
-
-    if OUTPUT_MODE == "PNG_SEQUENCE":
-        run_dir = FRAMES_DIR / frame_output_run_name()
-        ensure_dir(run_dir)
-        png_ready = set_output_image_format(scene, "PNG", strict=False)
-        if png_ready:
-            scene.render.image_settings.color_mode = PNG_COLOR_MODE
-            scene.render.image_settings.compression = PNG_COMPRESSION
-        scene.render.use_file_extension = True
-        scene.render.filepath = str(run_dir / "frame_")
-        if png_ready:
-            log(f"PNG sequence output set to: {run_dir}\\frame_####.png")
-        else:
-            log(f"PNG output format could not be set. Safe frame folder prepared: {run_dir}")
-            log("Open scripts/render_png_frames_safe.py in Blender and run it to render PNG frames safely.")
-    elif OUTPUT_MODE == "MP4":
-        ensure_dir(VIDEO_DIR)
-        set_output_image_format(scene, "FFMPEG", strict=True)
-        scene.render.ffmpeg.format = "MPEG4"
-        scene.render.ffmpeg.codec = "H264"
-        scene.render.ffmpeg.constant_rate_factor = "MEDIUM"
-        scene.render.ffmpeg.audio_codec = "AAC"
-        scene.render.filepath = str(VIDEO_DIR / OUTPUT_FILENAME)
-        log(f"MP4 render output set to: {scene.render.filepath}")
-    else:
-        raise PipelineError(f"Unsupported OUTPUT_MODE: {OUTPUT_MODE}. Use 'PNG_SEQUENCE' or 'MP4'.")
+    log("Scene preview/render settings prepared. Actual frame rendering is handled by render_png_frames_safe.py.")
 
 
 def existing_image_path(image: bpy.types.Image) -> Path | None:
@@ -955,19 +884,7 @@ def save_blend_copy() -> None:
     log(f"Saved editable blend copy: {path}")
 
 
-def render_if_enabled() -> None:
-    if not RENDER_ANIMATION:
-        log(
-            "RENDER_ANIMATION is False. Scene is prepared only. "
-            "Use Blender Render -> Render Animation to render the configured PNG sequence."
-        )
-        return
-    bpy.ops.render.render(animation=True)
-
-
 def run_pipeline() -> None:
-    ensure_dir(VIDEO_DIR)
-    ensure_dir(FRAMES_DIR)
     ensure_dir(BLEND_DIR)
 
     open_source_blend_if_requested()
@@ -992,9 +909,8 @@ def run_pipeline() -> None:
     configure_rigid_body_physics()
     setup_render_settings()
     save_blend_copy()
-    render_if_enabled()
 
-    log("Existing blend motion replacement complete.")
+    log("Existing blend motion replacement complete. Use render_png_frames_safe.py for frame rendering.")
 
 
 if __name__ == "__main__":

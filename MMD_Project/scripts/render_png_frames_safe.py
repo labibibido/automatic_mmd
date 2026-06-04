@@ -20,6 +20,9 @@ FRAME_STEP = 1
 FRAME_START_OVERRIDE = 0
 FRAME_END_OVERRIDE = 0
 SAVE_FORMAT = "PNG"
+RESOLUTION_PERCENTAGE = 100
+PNG_COLOR_MODE = "RGBA"
+PNG_COMPRESSION = 15
 
 
 def log(message: str) -> None:
@@ -61,13 +64,26 @@ def save_render_result(path: Path) -> None:
     image.save_render(filepath=str(path), scene=bpy.context.scene)
 
 
+def prepare_render_settings() -> None:
+    scene = bpy.context.scene
+    scene.render.resolution_percentage = RESOLUTION_PERCENTAGE
+    if SAVE_FORMAT.upper() == "PNG":
+        try:
+            scene.render.image_settings.color_mode = PNG_COLOR_MODE
+            scene.render.image_settings.compression = PNG_COMPRESSION
+        except Exception as exc:
+            log(f"Could not set PNG image settings, continuing with scene defaults: {exc}")
+
+
 def main() -> None:
     scene = bpy.context.scene
     start, end = frame_range()
     out_dir = output_dir()
+    prepare_render_settings()
 
     log(f"Output folder: {out_dir}")
     log(f"Frame range: {start}-{end}, step={FRAME_STEP}")
+    log(f"Resolution: {scene.render.resolution_x}x{scene.render.resolution_y} at {scene.render.resolution_percentage}%")
     log("Rendering one frame at a time. Already-rendered frames will be skipped.")
 
     for frame in range(start, end + 1, FRAME_STEP):
