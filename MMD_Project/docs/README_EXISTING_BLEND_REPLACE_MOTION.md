@@ -284,6 +284,25 @@ RIGID_BODY_SOLVER_ITERATIONS = 20
 
 如果动作长度超过 `MAX_AUTO_BAKE_FRAMES`，脚本会跳过自动烘焙并打印提示。你可以提高这个值，或者在 Blender 里手动烘焙刚体缓存。
 
+如果耳朵看起来还是不明显晃，可以先确认它不是完全没动。运行：
+
+```text
+MMD_Project/scripts/inspect_ear_physics.py
+MMD_Project/scripts/measure_ear_motion.py
+```
+
+当前模型检查结果显示耳朵刚体、Joint、骨骼 Copy Transforms 约束和烘焙缓存都存在；耳朵刚体在动画中确实有位移。如果你想让耳朵更明显地晃，可以打开：
+
+```python
+AMPLIFY_EAR_PHYSICS = True
+```
+
+它会降低耳朵动态刚体的质量和阻尼，让耳朵更容易摆动。太飘的话，把它改回：
+
+```python
+AMPLIFY_EAR_PHYSICS = False
+```
+
 如果脚本找不到 `MMD_Project`，手动填写：
 
 ```python

@@ -55,6 +55,10 @@ BAKE_RIGID_BODY_PHYSICS = True
 MAX_AUTO_BAKE_FRAMES = 1500
 RIGID_BODY_SUBSTEPS = 10
 RIGID_BODY_SOLVER_ITERATIONS = 20
+AMPLIFY_EAR_PHYSICS = False
+EAR_PHYSICS_MASS_MULTIPLIER = 0.45
+EAR_PHYSICS_DAMPING_MULTIPLIER = 0.65
+EAR_PHYSICS_ANGULAR_DAMPING_MULTIPLIER = 0.65
 CAMERA_LOOK_AT_HEAD = False
 CAMERA_CALIBRATE_HEIGHT_ONCE = True
 CAMERA_HEAD_BONE_CANDIDATES = ["首", "上半身2", "上半身", "Neck", "neck", "Chest", "chest", "UpperBody2", "UpperBody"]
@@ -730,6 +734,9 @@ def configure_rigid_body_physics() -> None:
     if enabled:
         log(f"Enabled rigid body physics: {enabled} objects.")
 
+    if AMPLIFY_EAR_PHYSICS:
+        amplify_ear_physics(rigid_body_objects)
+
     world = bpy.context.scene.rigidbody_world
     if world is None:
         log("No rigid body world found. Skipping physics cache reset.")
@@ -768,6 +775,21 @@ def configure_rigid_body_physics() -> None:
             log("Baked rigid body physics cache.")
         except Exception as exc:
             log(f"Could not bake physics automatically: {exc}")
+
+
+def amplify_ear_physics(rigid_body_objects: list[bpy.types.Object]) -> None:
+    changed = 0
+    for obj in rigid_body_objects:
+        name = obj.name.lower()
+        if "ear" not in name or obj.rigid_body.kinematic:
+            continue
+        rb = obj.rigid_body
+        rb.mass = max(0.01, rb.mass * EAR_PHYSICS_MASS_MULTIPLIER)
+        rb.linear_damping *= EAR_PHYSICS_DAMPING_MULTIPLIER
+        rb.angular_damping *= EAR_PHYSICS_ANGULAR_DAMPING_MULTIPLIER
+        changed += 1
+    if changed:
+        log(f"Amplified ear physics response on {changed} rigid bodies.")
 
 
 def set_frame_range_from_actions() -> None:
